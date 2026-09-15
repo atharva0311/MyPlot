@@ -1,0 +1,121 @@
+import { ProjectData } from '@/types/plot';
+import { MASTERPLAN_CENTER } from './nakshatraPlots';
+
+export const PROJECT_DATA: ProjectData = {
+  id: 'IoKlH',
+  name: 'Nakshatra Luxury Enclave',
+  tagline: 'Next-Gen Plotted Development in a Peaceful Setting',
+  location: 'Gachibowli Outer Ring Road, Hyderabad',
+  coordinates: MASTERPLAN_CENTER,
+  developer: 'Nakshatra Urban Developers & SPACER Tech',
+  totalPlots: 109,
+  totalAcres: 24.5,
+  reraId: 'P02400007891',
+  possessionDate: 'December 2026',
+  amenities: [
+    {
+      id: 'clubhouse',
+      title: '15,000 sq.ft Grand Clubhouse',
+      description: 'State-of-the-art multi-tier clubhouse with swimming pool, gym, banquet hall & indoor sports courts.',
+      category: 'Recreation',
+      icon: 'Building2',
+    },
+    {
+      id: 'roads',
+      title: '60ft & 40ft Blacktop Roads',
+      description: 'Wide avenue roads with concrete kerbs, LED streetlighting & pedestrian footpaths.',
+      category: 'Infrastructure',
+      icon: 'Route',
+    },
+    {
+      id: 'security',
+      title: '24/7 Gated Security & CCTV',
+      description: 'Multi-layer security network with RFID boom barriers & app-based visitor management.',
+      category: 'Security',
+      icon: 'ShieldCheck',
+    },
+    {
+      id: 'cabling',
+      title: 'Underground Power & Fiber Cabling',
+      description: 'Zero overhead wires with dedicated transformer yards & high-speed FTTH internet ready.',
+      category: 'Infrastructure',
+      icon: 'Zap',
+    },
+    {
+      id: 'water',
+      title: 'Overhead Tank & Water Harvesting',
+      description: 'Centralized water supply network with rainwater harvesting pits in every plot block.',
+      category: 'Eco-Friendly',
+      icon: 'Droplets',
+    },
+    {
+      id: 'parks',
+      title: 'Central Theme Park & Botanical Gardens',
+      description: '3.5 acres of curated green landscapes, children play zones & senior citizen gazebos.',
+      category: 'Recreation',
+      icon: 'Trees',
+    },
+  ],
+  gallery: [
+    {
+      id: 'g1',
+      title: 'Aerial View of Masterplan',
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1200&auto=format&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=400&auto=format&fit=crop',
+    },
+    {
+      id: 'g2',
+      title: 'Grand Entrance Plaza Gate',
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1200&auto=format&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=400&auto=format&fit=crop',
+    },
+    {
+      id: 'g3',
+      title: 'Luxury Clubhouse Architecture',
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200&auto=format&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=400&auto=format&fit=crop',
+    },
+    {
+      id: 'g4',
+      title: 'Landscaped Botanical Park',
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?q=80&w=1200&auto=format&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?q=80&w=400&auto=format&fit=crop',
+    },
+  ],
+  locationHighlights: [
+    {
+      title: 'Outer Ring Road (ORR Junction)',
+      distance: '1.2 km',
+      travelTime: '3 mins',
+      category: 'Transport',
+    },
+    {
+      title: 'Financial District & IT Hub',
+      distance: '6.5 km',
+      travelTime: '10 mins',
+      category: 'Commercial',
+    },
+    {
+      title: 'International Airport (RGIA)',
+      distance: '24 km',
+      travelTime: '25 mins',
+      category: 'Transport',
+    },
+    {
+      title: 'Oakridge & Delhi Public School',
+      distance: '3.0 km',
+      travelTime: '6 mins',
+      category: 'Education',
+    },
+    {
+      title: 'Continental & AIG Super Speciality Hospitals',
+      distance: '5.0 km',
+      travelTime: '9 mins',
+      category: 'Healthcare',
+    },
+  ],
+};
