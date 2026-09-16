@@ -10,7 +10,8 @@ import {
   MapPin,
   Layers,
   Globe2,
-  Navigation
+  Navigation,
+  Compass
 } from 'lucide-react';
 import { Plot } from '@/types/plot';
 import SearchAutocomplete from './SearchAutocomplete';
@@ -23,7 +24,11 @@ interface HeaderProps {
   onSelectPlot: (plot: Plot) => void;
   onOpenFilters: () => void;
   onOpenProjectInfo: () => void;
+  onOpenCADManager?: () => void;
   activeFilterCount: number;
+  center?: [number, number];
+  projectName?: string;
+  projectSubtitle?: string;
 }
 
 export default function Header({
@@ -32,7 +37,11 @@ export default function Header({
   onSelectPlot,
   onOpenFilters,
   onOpenProjectInfo,
+  onOpenCADManager,
   activeFilterCount,
+  center,
+  projectName,
+  projectSubtitle,
 }: HeaderProps) {
   const { language, setLanguage, t } = useLanguage();
   const [copied, setCopied] = useState(false);
@@ -52,7 +61,7 @@ export default function Header({
   };
 
   const handleDownloadBrochure = () => {
-    const content = `NAKSHATRA LUXURY ENCLAVE - MASTERPLAN BROCHURE\nRERA ID: P02400007891\nTotal Plots: 109 | Location: Gachibowli ORR, Hyderabad\nDeveloper: Nakshatra Urban Developers & SPACER Tech\n\nContact Sales Office for bookings.`;
+    const content = `NAKSHATRA LUXURY ENCLAVE - MASTERPLAN BROCHURE\nMahaRERA ID: P53000034120\nTotal Plots: 109 | Location: Kalamba Outskirts, Kolhapur, Maharashtra\nDeveloper: Nakshatra Urban Developers & SPACER Tech\n\nContact Sales Office for bookings.`;
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -63,7 +72,8 @@ export default function Header({
   };
 
   const handleNavigateGoogleMaps = () => {
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${MASTERPLAN_CENTER[0]},${MASTERPLAN_CENTER[1]}`, '_blank');
+    const active = center || MASTERPLAN_CENTER;
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${active[0]},${active[1]}`, '_blank');
   };
 
   return (
@@ -83,7 +93,7 @@ export default function Header({
             <div>
               <div className="flex items-center space-x-2">
                 <h1 className="font-bold text-sm md:text-base text-white tracking-wide">
-                  {t('projectName')}
+                  {projectName || t('projectName')}
                 </h1>
                 <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-sky-500/20 text-sky-400 border border-sky-500/30 rounded-md">
                   {t('projectBadge')}
@@ -95,7 +105,7 @@ export default function Header({
                 title={t('navigateSite')}
               >
                 <MapPin className="w-3 h-3 text-emerald-400 group-hover:scale-110 transition-transform" />
-                <span className="truncate max-w-[170px] md:max-w-xs">{t('projectSubtitle')}</span>
+                <span className="truncate max-w-[170px] md:max-w-xs">{projectSubtitle || t('projectSubtitle')}</span>
                 <Navigation className="w-2.5 h-2.5 text-sky-400 opacity-80" />
               </div>
             </div>
@@ -190,6 +200,22 @@ export default function Header({
             <Info className="w-4 h-4 text-emerald-400" />
             <span>{t('overview')}</span>
           </button>
+
+          {/* Dynamic Location & CAD Manager Button */}
+          {onOpenCADManager && (
+            <button
+              onClick={onOpenCADManager}
+              className="flex items-center space-x-1.5 glass-panel px-3.5 py-2 rounded-xl text-xs font-semibold text-amber-300 hover:text-white hover:bg-slate-800/80 transition-all border border-amber-500/40 relative shadow-lg shadow-amber-500/10 group"
+              title={language === 'mr' ? 'कॅड व लोकेशन व्यवस्थापक' : 'Dynamic Location & CAD Manager'}
+            >
+              <Compass className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform" />
+              <span className="hidden lg:inline">{language === 'mr' ? 'कॅड / लोकेशन' : 'CAD / Location'}</span>
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              </span>
+            </button>
+          )}
 
           {/* Download Brochure Button */}
           <button

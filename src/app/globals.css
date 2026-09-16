@@ -130,3 +130,102 @@
   box-shadow: 0 0 14px rgba(56, 189, 248, 0.8), 0 4px 10px rgba(0,0,0,0.7);
   pointer-events: none;
 }
+
+/* Satellite Basemap Layer */
+.cad-tile-layer {
+  /* Natural full-color satellite view matching normal app */
+}
+
+/* Landmark POI Badges (matches Screenshot 1 & 2) */
+.landmark-poi-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 9999px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #f8fafc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.landmark-poi-badge:hover {
+  transform: scale(1.08);
+  border-color: #38bdf8;
+  background: rgba(15, 23, 42, 0.98);
+}
+
+.landmark-poi-wrapper,
+.site-boundary-badge,
+.site-beacon-marker-wrapper {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Site Beacon Marker for World & Regional Zoom */
+.site-beacon-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transform: translateZ(0);
+}
+
+.site-beacon-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  margin-top: -24px;
+  margin-left: -24px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.9);
+  animation: beacon-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes beacon-ping {
+  0% { transform: scale(0.6); opacity: 1; }
+  75%, 100% { transform: scale(2.4); opacity: 0; }
+}
+
+.site-beacon-badge {
+  position: relative;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1.5px solid #38bdf8;
+  border-radius: 9999px;
+  padding: 4px 14px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.8), 0 0 16px rgba(56, 189, 248, 0.5);
+  text-align: center;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.site-beacon-container:hover .site-beacon-badge {
+  transform: scale(1.08);
+  border-color: #60a5fa;
+  background: rgba(15, 23, 42, 1);
+}
+
+.site-beacon-title {
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.site-beacon-stats {
+  color: #38bdf8;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+

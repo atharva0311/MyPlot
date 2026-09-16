@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plot, PlotStatus } from '@/types/plot';
+import { Plot, PlotStatus, Landmark } from '@/types/plot';
 import { LinearUnit } from '@/utils/formatters';
 import { MASTERPLAN_CENTER } from '@/data/nakshatraPlots';
 import LeafletMapContainer from './LeafletMapContainer';
@@ -19,6 +19,12 @@ interface MapViewerProps {
   bookedCount: number;
   soldCount: number;
   linearUnit?: LinearUnit;
+  onOpenSearch?: () => void;
+  onOpenInfo?: () => void;
+  onOpenCADManager?: () => void;
+  center?: [number, number];
+  landmarks?: Landmark[];
+  projectName?: string;
 }
 
 export default function MapViewer({
@@ -31,20 +37,28 @@ export default function MapViewer({
   bookedCount,
   soldCount,
   linearUnit = 'ft',
+  onOpenSearch,
+  onOpenInfo,
+  onOpenCADManager,
+  center,
+  landmarks,
+  projectName,
 }: MapViewerProps) {
   const [mapMode, setMapMode] = useState<'satellite' | 'vector'>('satellite');
   const [is3dPerspective, setIs3dPerspective] = useState(false);
   const [showDimensions, setShowDimensions] = useState(false);
-  const [showStatus, setShowStatus] = useState(true);
+  const [showStatus, setShowStatus] = useState(false);
   const [siteFocus, setSiteFocus] = useState(true);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [resetViewTrigger, setResetViewTrigger] = useState(0);
 
   const handleResetView = () => {
     onSelectPlot(null);
+    setResetViewTrigger((prev) => prev + 1);
   };
 
   const handleDownloadBrochure = () => {
-    const content = `NAKSHATRA LUXURY RESIDENTIAL ENCLAVE\nMasterplan Architecture Brochure\nRERA: P02400007891\nLocation: Gachibowli ORR, Hyderabad\nTotal Plots: 109 Plotted Units (24.5 Acres)\nAmenities: 15,000 sq.ft Clubhouse, Swimming Pool, Box Cricket Turf, Oxygen Park, Underground Utilities\nContact Sales Office for plot bookings.`;
+    const content = `NAKSHATRA LUXURY RESIDENTIAL ENCLAVE\nMasterplan Architecture Brochure\nMahaRERA: P53000034120\nLocation: Kalamba Outskirts, Kolhapur, Maharashtra\nTotal Plots: 109 Plotted Units (24.5 Acres)\nAmenities: 15,000 sq.ft Clubhouse, Swimming Pool, Box Cricket Turf, Oxygen Park, Underground Utilities\nContact Sales Office for plot bookings.`;
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -55,9 +69,10 @@ export default function MapViewer({
   };
 
   const handleNavigateCoordinates = () => {
+    const activeCoords = center || MASTERPLAN_CENTER;
     const dest = selectedPlot
       ? `${selectedPlot.polygon[0][0]},${selectedPlot.polygon[0][1]}`
-      : `${MASTERPLAN_CENTER[0]},${MASTERPLAN_CENTER[1]}`;
+      : `${activeCoords[0]},${activeCoords[1]}`;
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${dest}`, '_blank');
   };
 
@@ -74,9 +89,13 @@ export default function MapViewer({
         showStatus={showStatus}
         siteFocus={siteFocus}
         linearUnit={linearUnit}
+        center={center}
+        landmarks={landmarks}
+        projectName={projectName}
+        resetViewTrigger={resetViewTrigger}
       />
 
-      {/* Map Controls (Top-Right / Bottom-Right Floating) matching Screenshot 2 */}
+      {/* Map Controls (Bottom-Right Floating) matching Screenshot 1 & 2 */}
       <MapControls
         mapMode={mapMode}
         onToggleMapMode={() => setMapMode((prev) => (prev === 'satellite' ? 'vector' : 'satellite'))}
@@ -89,9 +108,12 @@ export default function MapViewer({
         siteFocus={siteFocus}
         onToggleSiteFocus={() => setSiteFocus((prev) => !prev)}
         onOpenGallery={() => setIsGalleryOpen(true)}
+        onOpenSearch={onOpenSearch}
+        onOpenInfo={onOpenInfo}
         onDownloadBrochure={handleDownloadBrochure}
         onNavigateCoordinates={handleNavigateCoordinates}
         onResetView={handleResetView}
+        onOpenCADManager={onOpenCADManager}
       />
 
       {/* Bottom Left Status Legend (Visible when showStatus is true) */}

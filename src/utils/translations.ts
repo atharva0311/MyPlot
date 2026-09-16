@@ -5,7 +5,7 @@ export const TRANSLATIONS = {
     // Header
     projectName: 'NAKSHATRA',
     projectBadge: 'SPACER 3D',
-    projectSubtitle: 'Gachibowli ORR • 109 Residential Plots',
+    projectSubtitle: 'Kalamba Outskirts, Kolhapur • 109 Residential Plots',
     searchPlaceholder: 'Search Plot # (e.g. 012, Block A)...',
     total: 'Total',
     available: 'Available',
@@ -65,6 +65,11 @@ export const TRANSLATIONS = {
     // Floating Controls
     statusToggle: 'Status',
     gallery: 'Gallery',
+    searchBtn: 'Search',
+    gpsBtn: 'GPS',
+    infoBtn: 'Info',
+    locateBtn: 'Locate',
+    landmarksBtn: 'Landmarks',
     dimensions: 'Dimensions',
     view2d: '2D View',
     view3d: '3D View',
@@ -75,6 +80,7 @@ export const TRANSLATIONS = {
     projectBoundary: 'Project Boundary',
     resetCenter: 'Reset View',
     googleMapsDirections: 'Directions in Google Maps',
+    cadManager: 'Dynamic CAD & Location',
 
     // Filter Modal
     filterTitle: 'Filter Masterplan Plots',
@@ -113,7 +119,7 @@ export const TRANSLATIONS = {
     // Header
     projectName: 'नक्षत्र',
     projectBadge: 'स्पेसॉर ३डी',
-    projectSubtitle: 'गच्चीबौवली ओआरआर • १०९ निवासी प्लॉट्स',
+    projectSubtitle: 'काळांबा परिसर, कोल्हापूर • १०९ निवासी प्लॉट्स',
     searchPlaceholder: 'प्लॉट क्र. शोधा (उदा. ०१२, ब्लॉक ए)...',
     total: 'एकूण',
     available: 'उपलब्ध',
@@ -173,6 +179,11 @@ export const TRANSLATIONS = {
     // Floating Controls
     statusToggle: 'स्थिती (Status)',
     gallery: 'गॅलरी',
+    searchBtn: 'शोधा',
+    gpsBtn: 'जीपीएस',
+    infoBtn: 'माहिती',
+    locateBtn: 'स्थान',
+    landmarksBtn: 'ठिकाणे',
     dimensions: 'मोजमापे',
     view2d: '२डी दृश्य',
     view3d: '३डी दृश्य',
@@ -183,6 +194,7 @@ export const TRANSLATIONS = {
     projectBoundary: 'प्रकल्प सीमा',
     resetCenter: 'केंद्रस्थानी आणा',
     googleMapsDirections: 'गुगल मॅप्स दिशा-निर्देश',
+    cadManager: 'डायनॅमिक कॅड व लोकेशन',
 
     // Filter Modal
     filterTitle: 'प्लॉट्स फिल्टर करा',

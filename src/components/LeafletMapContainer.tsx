@@ -2,10 +2,11 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import { Plot } from '@/types/plot';
-import { MASTERPLAN_CENTER, DEFAULT_ZOOM, MASTERPLAN_INFRASTRUCTURE } from '@/data/nakshatraPlots';
+import { Plot, Landmark } from '@/types/plot';
+import { MASTERPLAN_CENTER, DEFAULT_ZOOM, MASTERPLAN_INFRASTRUCTURE, NEARBY_LANDMARKS } from '@/data/nakshatraPlots';
 import { getPolygonCentroid, getPolygonEdges } from '@/utils/mapHelpers';
 import { LinearUnit, convertLength, formatCurrency } from '@/utils/formatters';
+import { computePlotsBounds, computePlotsCentroid } from '@/utils/cadParser';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface LeafletMapContainerProps {
@@ -18,32 +19,37 @@ interface LeafletMapContainerProps {
   showStatus: boolean;
   siteFocus?: boolean;
   linearUnit: LinearUnit;
+  center?: [number, number];
+  landmarks?: Landmark[];
+  projectName?: string;
+  resetViewTrigger?: number;
 }
 
 // Helper to compute plot polygon style dynamically without tearing down SVG DOM elements
 function getPlotStyle(plot: Plot, isSelected: boolean, showStatus: boolean) {
-  let color = '#334155';
-  let fillColor = '#f8f5ee'; // Architectural CAD light ivory fill
-  let fillOpacity = 0.95;
+  // Architectural CAD warm ivory fill matching Screenshot 2
+  let color = '#384252';
+  let fillColor = '#e2dac7';
+  let fillOpacity = 0.98;
   let weight = 1.2;
   let dashArray: string | undefined = undefined;
 
   if (showStatus) {
     if (plot.status === 'available') {
-      color = '#10b981';
+      color = '#059669';
       fillColor = '#10b981';
-      fillOpacity = 0.45;
+      fillOpacity = 0.82;
       weight = 1.5;
     } else if (plot.status === 'booked') {
-      color = '#f59e0b';
+      color = '#d97706';
       fillColor = '#f59e0b';
-      fillOpacity = 0.45;
+      fillOpacity = 0.82;
       weight = 1.5;
       dashArray = '4, 4';
     } else if (plot.status === 'sold') {
-      color = '#ef4444';
+      color = '#dc2626';
       fillColor = '#ef4444';
-      fillOpacity = 0.25;
+      fillOpacity = 0.65;
       weight = 1.5;
     }
   }
@@ -51,7 +57,7 @@ function getPlotStyle(plot: Plot, isSelected: boolean, showStatus: boolean) {
   if (isSelected) {
     color = '#ffffff';
     fillColor = '#0284c7';
-    fillOpacity = 0.75;
+    fillOpacity = 0.95;
     weight = 3;
     dashArray = undefined;
   }
@@ -69,16 +75,27 @@ export default function LeafletMapContainer({
   showStatus,
   siteFocus = true,
   linearUnit,
+  center,
+  landmarks,
+  projectName,
+  resetViewTrigger,
 }: LeafletMapContainerProps) {
   const { language, t } = useLanguage();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   
+  // Dynamic masterplan center & landmarks
+  const activeCenter: [number, number] = center || (plots.length > 0 ? computePlotsCentroid(plots) : MASTERPLAN_CENTER);
+  const activeLandmarks: Landmark[] = landmarks && landmarks.length > 0 ? landmarks : NEARBY_LANDMARKS;
+  const isDefaultSite = Math.abs(activeCenter[0] - MASTERPLAN_CENTER[0]) < 0.05 && Math.abs(activeCenter[1] - MASTERPLAN_CENTER[1]) < 0.05;
+
   // Layer Groups in z-order
   const maskLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const infraLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const plotLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const landmarksLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const beaconLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const labelLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const dimensionLayerGroupRef = useRef<L.LayerGroup | null>(null);
 
@@ -89,25 +106,57 @@ export default function LeafletMapContainer({
   const onSelectPlotRef = useRef(onSelectPlot);
   onSelectPlotRef.current = onSelectPlot;
 
-  const [currentZoom, setCurrentZoom] = useState<number>(DEFAULT_ZOOM);
-  const [visiblePlotCount, setVisiblePlotCount] = useState<number>(109);
+  const [currentZoom, setCurrentZoom] = useState<number>(18.8);
+  const [visiblePlotCount, setVisiblePlotCount] = useState<number>(plots.length || 109);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize Leaflet Map (Run once)
+  // Helper to fit map camera tightly around the masterplan plot boundaries (Matches Screenshot 2)
+  const fitPlotBounds = () => {
+    if (!mapRef.current) return;
+    let boundsToFit: L.LatLngBounds | null = null;
+    if (isDefaultSite && MASTERPLAN_INFRASTRUCTURE.outerBoundary) {
+      boundsToFit = L.latLngBounds(MASTERPLAN_INFRASTRUCTURE.outerBoundary as [number, number][]);
+    } else if (plots.length > 0) {
+      boundsToFit = L.latLngBounds(computePlotsBounds(plots));
+    }
+
+    if (boundsToFit) {
+      mapRef.current.fitBounds(boundsToFit, {
+        padding: [30, 30],
+        maxZoom: 19.5,
+        animate: true,
+        duration: 1.0,
+      });
+    } else {
+      mapRef.current.flyTo(activeCenter, 18.8, { duration: 1.0 });
+    }
+  };
+
+  // Auto-focus camera on plot area on initial mount or when plots change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fitPlotBounds();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [activeCenter[0], activeCenter[1], plots.length]);
+
+  // Trigger camera fit when resetViewTrigger increments (Home / GPS / Reset View button)
+  useEffect(() => {
+    if (resetViewTrigger && resetViewTrigger > 0) {
+      fitPlotBounds();
+    }
+  }, [resetViewTrigger]);
+
+  // Initialize Leaflet Map (Run once) with Complete World Zoom capability
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
-    // Calculate site bounding box from outer boundary to restrict user panning
-    const siteBounds = L.latLngBounds(MASTERPLAN_INFRASTRUCTURE.outerBoundary as [number, number][]);
-    const paddedBounds = siteBounds.pad(0.35);
-
     const map = L.map(mapContainerRef.current, {
-      center: MASTERPLAN_CENTER,
-      zoom: DEFAULT_ZOOM,
-      minZoom: 16.0,
-      maxZoom: 20.5, // 20.5 provides razor-sharp plot dimensions without texture memory exhaustion
-      maxBounds: paddedBounds,
-      maxBoundsViscosity: 0.85,
+      center: activeCenter,
+      zoom: 18.8,
+      minZoom: 2.0, // Allows zooming out to the entire world map!
+      maxZoom: 20.5, // 20.5 provides razor-sharp plot dimensions
+      worldCopyJump: true,
       zoomControl: false,
       attributionControl: false,
       zoomAnimation: true,
@@ -126,8 +175,8 @@ export default function LeafletMapContainer({
           const zoom = mapRef.current.getZoom();
           const bounds = mapRef.current.getBounds();
           const visible = plots.filter((plot) => {
-            const center = getPolygonCentroid(plot.polygon);
-            return bounds.contains(L.latLng(center[0], center[1]));
+            const centroid = getPolygonCentroid(plot.polygon);
+            return bounds.contains(L.latLng(centroid[0], centroid[1]));
           });
           setCurrentZoom(zoom);
           setVisiblePlotCount(visible.length);
@@ -141,109 +190,169 @@ export default function LeafletMapContainer({
     // Initial check
     setTimeout(updateViewportState, 200);
 
+    // Handle Window Resize
+    const handleResize = () => {
+      if (mapRef.current) {
+        mapRef.current.invalidateSize();
+      }
+    };
+    // 1. Base Satellite Tile Layer (Initialized synchronously with map instance)
+    const isSatelliteMode = mapMode === 'satellite';
+    const initialTileUrl = isSatelliteMode
+      ? 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'
+      : 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+
+    const tileLayer = L.tileLayer(initialTileUrl, {
+      maxZoom: 21,
+      maxNativeZoom: 20,
+      opacity: 1.0,
+      updateWhenZooming: false,
+      updateWhenIdle: true,
+      keepBuffer: 3,
+    }).addTo(map);
+
+    tileLayer.on('tileerror', () => {
+      // Fallback to ArcGIS World Imagery if Google is ever unreachable
+      if (tileLayerRef.current && !(tileLayerRef.current as any)._fallbackActive) {
+        (tileLayerRef.current as any)._fallbackActive = true;
+        tileLayerRef.current.setUrl('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+      }
+    });
+
+    tileLayerRef.current = tileLayer;
+
     // Layer Groups in z-order
     maskLayerGroupRef.current = L.layerGroup().addTo(map);
     infraLayerGroupRef.current = L.layerGroup().addTo(map);
     plotLayerGroupRef.current = L.layerGroup().addTo(map);
+    landmarksLayerGroupRef.current = L.layerGroup().addTo(map);
+    beaconLayerGroupRef.current = L.layerGroup().addTo(map);
     labelLayerGroupRef.current = L.layerGroup().addTo(map);
     dimensionLayerGroupRef.current = L.layerGroup().addTo(map);
 
     return () => {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      window.removeEventListener('resize', handleResize);
       map.off('zoomend', updateViewportState);
       map.off('moveend', updateViewportState);
       map.remove();
       mapRef.current = null;
+      tileLayerRef.current = null;
     };
   }, []);
 
-  // Update Tile Layer based on mapMode with maxNativeZoom and updateWhenZooming=false
+  // Update Tile Layer URL only when mapMode changes
   useEffect(() => {
-    if (!mapRef.current) return;
-
-    if (tileLayerRef.current) {
-      mapRef.current.removeLayer(tileLayerRef.current);
-    }
-
+    if (!tileLayerRef.current) return;
     const isSatellite = mapMode === 'satellite';
     const tileUrl = isSatellite
-      ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-      : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-
-    const tileLayer = L.tileLayer(tileUrl, {
-      maxZoom: 20.5,
-      maxNativeZoom: isSatellite ? 18 : 19,
-      subdomains: 'abcd',
-      opacity: isSatellite ? 0.90 : 0.95,
-      updateWhenZooming: false, // Critical: Stops tile requests during zoom animations
-      updateWhenIdle: true,     // Loads tiles only when movement pauses
-      keepBuffer: 2,
-    }).addTo(mapRef.current);
-
-    tileLayerRef.current = tileLayer;
+      ? 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'
+      : 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+    tileLayerRef.current.setUrl(tileUrl);
   }, [mapMode]);
 
-  // Render Site Focus Mask (Surrounding Vignette with optimized local bounds)
+  // Smoothly fly camera to active center when masterplan coordinates change
+  useEffect(() => {
+    if (!mapRef.current) return;
+    mapRef.current.flyTo(activeCenter, 18.0, { duration: 1.2 });
+  }, [activeCenter[0], activeCenter[1]]);
+
+  // Render Site Beacon at low zoom levels (Zoom < 14.5) for World/Regional View
+  useEffect(() => {
+    if (!mapRef.current || !beaconLayerGroupRef.current) return;
+    beaconLayerGroupRef.current.clearLayers();
+
+    if (currentZoom < 14.5) {
+      const siteIcon = L.divIcon({
+        className: 'site-beacon-marker-wrapper',
+        html: `
+          <div class="site-beacon-container">
+            <div class="site-beacon-pulse"></div>
+            <div class="site-beacon-badge">
+              <div class="site-beacon-title">📍 ${projectName || (language === 'mr' ? 'नक्षत्र एन्क्लेव्ह' : 'Nakshatra Masterplan')}</div>
+              <div class="site-beacon-stats">${plots.length} ${language === 'mr' ? 'प्लॉट्स • झूम करण्यासाठी क्लिक करा' : 'Plots • Click to Focus'}</div>
+            </div>
+          </div>
+        `,
+        iconSize: [220, 50],
+        iconAnchor: [110, 25],
+      });
+
+      const beaconMarker = L.marker(activeCenter, { icon: siteIcon, interactive: true });
+      beaconMarker.on('click', () => {
+        fitPlotBounds();
+      });
+      beaconMarker.addTo(beaconLayerGroupRef.current);
+    }
+  }, [currentZoom, activeCenter[0], activeCenter[1], plots.length, projectName, language]);
+
+  // Native Dynamic Landmarks: Automatically rendered directly by Google Hybrid tiles
+  // No manual landmark files needed - map tiles show all local POIs, lakes, transit, and institutions dynamically
+  useEffect(() => {
+    if (!mapRef.current || !landmarksLayerGroupRef.current) return;
+    landmarksLayerGroupRef.current.clearLayers();
+  }, []);
+
+  // Render Spotlight Focus Inverted Mask & Project Perimeter (Matches Screenshot 2)
   useEffect(() => {
     if (!mapRef.current || !maskLayerGroupRef.current) return;
 
     maskLayerGroupRef.current.clearLayers();
 
-    if (!siteFocus) return;
+    let outerBoundary: [number, number][] = [];
+    if (isDefaultSite && MASTERPLAN_INFRASTRUCTURE.outerBoundary) {
+      outerBoundary = MASTERPLAN_INFRASTRUCTURE.outerBoundary as [number, number][];
+    } else if (plots.length > 0) {
+      const [[minLat, minLng], [maxLat, maxLng]] = computePlotsBounds(plots);
+      outerBoundary = [
+        [minLat - 0.0003, minLng - 0.0003],
+        [minLat - 0.0003, maxLng + 0.0003],
+        [maxLat + 0.0003, maxLng + 0.0003],
+        [maxLat + 0.0003, minLng - 0.0003],
+      ];
+    }
 
-    const outerBoundary = MASTERPLAN_INFRASTRUCTURE.outerBoundary as [number, number][];
-    if (!outerBoundary || outerBoundary.length === 0) return;
+    if (outerBoundary.length === 0) return;
 
-    // Bounding box of radius ~8km around site (1000x faster SVG clipping than whole-world coordinates)
-    const pad = 0.08;
-    const outerBox: [number, number][] = [
-      [MASTERPLAN_CENTER[0] - pad, MASTERPLAN_CENTER[1] - pad],
-      [MASTERPLAN_CENTER[0] - pad, MASTERPLAN_CENTER[1] + pad],
-      [MASTERPLAN_CENTER[0] + pad, MASTERPLAN_CENTER[1] + pad],
-      [MASTERPLAN_CENTER[0] + pad, MASTERPLAN_CENTER[1] - pad],
-    ];
+    // SPOTLIGHT FOCUS ON PLOT AREA (Activates when zoomed in >= 16.0, exactly matching Screenshot 2)
+    // Softly dims surrounding terrain (48% opacity) so the satellite imagery (streets, houses, trees) remains visible,
+    // while making the central plotted masterplan pop forward in clear spotlight focus!
+    if (siteFocus && currentZoom >= 16.0) {
+      const worldRing: [number, number][] = [
+        [-89.9, -179.9],
+        [-89.9, 179.9],
+        [89.9, 179.9],
+        [89.9, -179.9],
+      ];
 
-    // Inverted donut polygon: dims outside area, leaves masterplan 100% crisp
-    const mask = L.polygon([outerBox, outerBoundary], {
-      fillColor: '#020617',
-      fillOpacity: mapMode === 'satellite' ? 0.68 : 0.88,
-      stroke: false,
-      interactive: false,
-    });
-    mask.addTo(maskLayerGroupRef.current);
+      const focusMask = L.polygon([worldRing, outerBoundary], {
+        stroke: false,
+        fillColor: '#000000',
+        fillOpacity: 0.48, // 48% soft dimming: satellite photo is clearly visible underneath, matching Screenshot 2!
+        interactive: false,
+      });
+      focusMask.addTo(maskLayerGroupRef.current);
+    }
 
-    // Glowing Project Perimeter Line
+    // Clean Subtle Project Perimeter Line (clean dashed boundary as in Screenshot 1 & 2)
     const perimeterLine = L.polygon(outerBoundary, {
       color: '#38bdf8',
-      weight: 2,
-      dashArray: '8, 6',
+      weight: 1.5,
+      dashArray: '6, 6',
       fill: false,
       interactive: false,
+      opacity: 0.85,
     });
     perimeterLine.addTo(maskLayerGroupRef.current);
 
-    // Boundary Badge
-    const topPoint = outerBoundary[1];
-    const badgeHtml = `
-      <div style="background: rgba(15, 23, 42, 0.94); color: #38bdf8; font-size: 8.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.6); letter-spacing: 0.8px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.6); text-transform: uppercase;">
-        ⚡ ${language === 'mr' ? 'प्रकल्प सीमा' : 'PROJECT BOUNDARY'}
-      </div>
-    `;
-    const boundaryIcon = L.divIcon({
-      className: 'site-boundary-badge',
-      html: badgeHtml,
-      iconSize: [120, 20],
-      iconAnchor: [60, 10],
-    });
-    L.marker(topPoint, { icon: boundaryIcon, interactive: false }).addTo(maskLayerGroupRef.current);
+  }, [siteFocus, mapMode, language, isDefaultSite, plots, currentZoom]);
 
-  }, [siteFocus, mapMode, language]);
-
-  // Render Masterplan Infrastructure (Runs once)
+  // Render Masterplan Infrastructure (Only for default Kolhapur masterplan layout)
   useEffect(() => {
     if (!mapRef.current || !infraLayerGroupRef.current) return;
 
     infraLayerGroupRef.current.clearLayers();
+    if (!isDefaultSite) return; // Don't draw roads on custom or relocated sites
     const infra = MASTERPLAN_INFRASTRUCTURE;
 
     // 1. Outer Buffer Perimeter
@@ -402,14 +511,14 @@ export default function LeafletMapContainer({
       const roadMid = getPolygonCentroid(infra.mainRoad1 as [number, number][]);
       const roadIcon = L.divIcon({
         className: 'infra-road-badge',
-        html: `<div style="color: #94a3b8; font-size: 8px; font-weight: 800; transform: rotate(-38deg); text-shadow: 0 1px 3px #000; letter-spacing: 0.5px; opacity: 0.85; white-space: nowrap;">7.50M WIDE ROAD ↑</div>`,
-        iconSize: [110, 16],
-        iconAnchor: [55, 8],
+        html: `<div style="color: #f1f5f9; font-size: 9.5px; font-weight: 900; letter-spacing: 1.5px; transform: rotate(-38deg); text-shadow: 0 2px 4px rgba(0,0,0,0.9); white-space: nowrap;">12 METER ROAD ↑</div>`,
+        iconSize: [120, 20],
+        iconAnchor: [60, 10],
       });
       L.marker(roadMid, { icon: roadIcon, interactive: false }).addTo(infraLayerGroupRef.current);
     }
 
-  }, []);
+  }, [isDefaultSite]);
 
   // BUILD PLOT POLYGONS & LABELS ONCE (Only when `plots` or `language` changes)
   // NEVER rebuild polygons on zoom or pan!
@@ -458,24 +567,26 @@ export default function LeafletMapContainer({
 
       polygon.bindTooltip(tooltipContent, {
         className: 'plot-tooltip-custom',
-        sticky: true,
+        sticky: false,
         direction: 'top',
         offset: [0, -10],
       });
 
       polygon.on('click', () => {
+        polygon.closeTooltip();
         onSelectPlotRef.current(plot);
       });
 
       polygon.on('mouseover', () => {
         polygon.setStyle({
-          fillOpacity: 0.75,
+          fillOpacity: 0.98,
           weight: 2.5,
           color: '#38bdf8',
         });
       });
 
       polygon.on('mouseout', () => {
+        polygon.closeTooltip();
         const curSelected = selectedPlot?.id === plot.id;
         polygon.setStyle(getPlotStyle(plot, curSelected, showStatus));
       });
@@ -483,11 +594,11 @@ export default function LeafletMapContainer({
       polygon.addTo(plotLayerGroupRef.current!);
       plotPolygonsMapRef.current.set(plot.id, polygon);
 
-      // Plot Number Label
+      // Plot Number Label (Matches Screenshot 2 bold numbers)
       const center = getPolygonCentroid(plot.polygon);
       const labelIcon = L.divIcon({
         className: 'plot-center-label',
-        html: `<div style="color: #0f172a; font-weight: 900; font-size: 9.5px; text-align: center; pointer-events: none; transform: rotate(-38deg);">${parseInt(plot.plotNumber, 10)}</div>`,
+        html: `<div style="color: #1e293b; font-weight: 900; font-size: 11px; text-shadow: 0 0 4px #ffffff, 0 0 2px #ffffff; text-align: center; pointer-events: none; transform: rotate(-38deg);">${parseInt(plot.plotNumber, 10)}</div>`,
         iconSize: [28, 16],
         iconAnchor: [14, 8],
       });
@@ -600,8 +711,8 @@ export default function LeafletMapContainer({
         is3dPerspective ? 'map-perspective-3d' : 'map-perspective-2d'
       }`}
     >
-      {/* Background Subtle CAD Grid Overlay */}
-      <div className="absolute inset-0 pointer-events-none z-10 opacity-15 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:24px_24px]"></div>
+      {/* Subtle CAD Drafting Grid Overlay (Matches Screenshot 2) */}
+      <div className="absolute inset-0 pointer-events-none z-10 opacity-15 [background-image:linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:44px_44px]"></div>
       
       <div ref={mapContainerRef} className="w-full h-full" />
     </div>

@@ -69,11 +69,33 @@ export interface GalleryItem {
   thumbnail: string;
 }
 
+export type LandmarkCategory = 
+  | 'river' 
+  | 'stay' 
+  | 'commercial' 
+  | 'locality' 
+  | 'resort' 
+  | 'scenic' 
+  | 'transit' 
+  | 'education' 
+  | 'health';
+
+export interface Landmark {
+  id: string;
+  name: string;
+  nameMr: string;
+  category: LandmarkCategory;
+  position: [number, number];
+  distanceMeters: number;
+  iconType: string;
+  description: string;
+}
+
 export interface LocationHighlight {
   title: string;
   distance: string;
   travelTime: string;
-  category: 'Transport' | 'Education' | 'Healthcare' | 'Commercial';
+  category: 'Transport' | 'Education' | 'Healthcare' | 'Commercial' | 'Natural Landmark' | 'Hospitality' | 'Recreation' | 'Cultural Landmark';
 }
 
 export interface ProjectData {
