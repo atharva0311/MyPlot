@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, RotateCcw, Check, SlidersHorizontal, Compass, Building2, DollarSign } from 'lucide-react';
+import { X, RotateCcw, Check, SlidersHorizontal, Compass, Building2 } from 'lucide-react';
 import { FilterState, PlotStatus, FacingDirection } from '@/types/plot';
-import { formatCurrency } from '@/utils/formatters';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface FilterModalProps {
   isOpen: boolean;
@@ -14,12 +14,6 @@ interface FilterModalProps {
   onResetFilters: () => void;
   totalFilteredCount: number;
 }
-
-const ALL_STATUSES: { id: PlotStatus; label: string; color: string }[] = [
-  { id: 'available', label: 'Available', color: 'emerald' },
-  { id: 'booked', label: 'Booked', color: 'amber' },
-  { id: 'sold', label: 'Sold', color: 'rose' },
-];
 
 const ALL_FACINGS: FacingDirection[] = ['East', 'North', 'West', 'South', 'North-East'];
 const ALL_ZONES = ['Block A', 'Block B', 'Block C', 'Premium Enclave'];
@@ -32,7 +26,15 @@ export default function FilterModal({
   onResetFilters,
   totalFilteredCount,
 }: FilterModalProps) {
+  const { language, t } = useLanguage();
+
   if (!isOpen) return null;
+
+  const ALL_STATUSES: { id: PlotStatus; label: string; color: string }[] = [
+    { id: 'available', label: t('available'), color: 'emerald' },
+    { id: 'booked', label: t('booked'), color: 'amber' },
+    { id: 'sold', label: t('sold'), color: 'rose' },
+  ];
 
   const toggleStatus = (status: PlotStatus) => {
     const updated = filters.statuses.includes(status)
@@ -55,6 +57,17 @@ export default function FilterModal({
     onUpdateFilters({ ...filters, zones: updated });
   };
 
+  const getFacingLabel = (facing: string) => {
+    switch (facing) {
+      case 'East': return t('facingEast');
+      case 'West': return t('facingWest');
+      case 'North': return t('facingNorth');
+      case 'South': return t('facingSouth');
+      case 'North-East': return t('facingNorthEast');
+      default: return facing;
+    }
+  };
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md pointer-events-auto">
@@ -71,8 +84,10 @@ export default function FilterModal({
                 <SlidersHorizontal className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-white">Filter Plots</h2>
-                <p className="text-xs text-slate-400">Narrow down masterplan plots by criteria</p>
+                <h2 className="text-base font-bold text-white">{t('filterTitle')}</h2>
+                <p className="text-xs text-slate-400">
+                  {language === 'mr' ? 'प्लॉट्सची स्थिती, दिशा आणि आकारानुसार निवड करा' : 'Narrow down masterplan plots by criteria'}
+                </p>
               </div>
             </div>
             <button
@@ -89,7 +104,7 @@ export default function FilterModal({
             {/* Status Filter */}
             <div>
               <label className="block font-bold text-slate-200 mb-2.5 uppercase tracking-wider">
-                Plot Availability Status
+                {t('allStatuses')}
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {ALL_STATUSES.map((st) => {
@@ -116,7 +131,7 @@ export default function FilterModal({
             <div>
               <label className="block font-bold text-slate-200 mb-2.5 uppercase tracking-wider flex items-center space-x-1.5">
                 <Compass className="w-4 h-4 text-emerald-400" />
-                <span>Facing Direction</span>
+                <span>{t('facingFilter')}</span>
               </label>
               <div className="flex flex-wrap gap-2">
                 {ALL_FACINGS.map((facing) => {
@@ -131,7 +146,7 @@ export default function FilterModal({
                           : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
                       }`}
                     >
-                      {facing} Facing
+                      {getFacingLabel(facing)}
                     </button>
                   );
                 })}
@@ -142,7 +157,7 @@ export default function FilterModal({
             <div>
               <label className="block font-bold text-slate-200 mb-2.5 uppercase tracking-wider flex items-center space-x-1.5">
                 <Building2 className="w-4 h-4 text-purple-400" />
-                <span>Zone & Block</span>
+                <span>{t('zoneFilter')}</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {ALL_ZONES.map((zone) => {
@@ -169,7 +184,7 @@ export default function FilterModal({
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="font-bold text-slate-200 uppercase tracking-wider">
-                  Min Plot Area: <span className="text-sky-400 font-bold">{filters.minArea} sq.ft</span>
+                  {t('areaRange')}: <span className="text-sky-400 font-bold">{filters.minArea} sq.ft</span>
                 </label>
               </div>
               <input
@@ -186,7 +201,7 @@ export default function FilterModal({
             {/* Toggles */}
             <div className="space-y-2 pt-2 border-t border-slate-800">
               <label className="flex items-center justify-between p-3 rounded-xl glass-card cursor-pointer">
-                <span className="font-semibold text-slate-300">Corner Plots Only</span>
+                <span className="font-semibold text-slate-300">{t('cornerOnly')}</span>
                 <input
                   type="checkbox"
                   checked={filters.showOnlyCorner}
@@ -196,7 +211,7 @@ export default function FilterModal({
               </label>
 
               <label className="flex items-center justify-between p-3 rounded-xl glass-card cursor-pointer">
-                <span className="font-semibold text-slate-300">100% Vastu Compliant Only</span>
+                <span className="font-semibold text-slate-300">{t('vastuOnly')}</span>
                 <input
                   type="checkbox"
                   checked={filters.showOnlyVastu}
@@ -215,14 +230,14 @@ export default function FilterModal({
               className="py-2.5 px-4 rounded-xl glass-panel text-slate-400 hover:text-white border border-slate-700/60 font-semibold flex items-center space-x-1.5 transition-all"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>Reset</span>
+              <span>{t('resetFilters')}</span>
             </button>
 
             <button
               onClick={onClose}
               className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-extrabold shadow-xl shadow-sky-500/20 text-center transition-all"
             >
-              Show {totalFilteredCount} Plots
+              {language === 'mr' ? `${totalFilteredCount} प्लॉट्स दाखवा` : `Show ${totalFilteredCount} Plots`}
             </button>
           </div>
 
@@ -231,3 +246,4 @@ export default function FilterModal({
     </AnimatePresence>
   );
 }
+

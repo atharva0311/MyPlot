@@ -4,20 +4,15 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
-  Building2, 
-  ShieldCheck, 
   MapPin, 
-  Trees, 
-  Route, 
-  Zap, 
-  Droplets, 
-  Sparkles, 
-  Image as ImageIcon,
-  CheckCircle,
-  Calendar,
-  Award
+  CheckCircle, 
+  Award,
+  Navigation,
+  ExternalLink
 } from 'lucide-react';
 import { PROJECT_DATA } from '@/data/projectDetails';
+import { useLanguage } from '@/context/LanguageContext';
+import { MASTERPLAN_CENTER } from '@/data/nakshatraPlots';
 
 interface ProjectInfoModalProps {
   isOpen: boolean;
@@ -25,9 +20,14 @@ interface ProjectInfoModalProps {
 }
 
 export default function ProjectInfoModal({ isOpen, onClose }: ProjectInfoModalProps) {
+  const { language, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'overview' | 'amenities' | 'gallery' | 'location'>('overview');
 
   if (!isOpen) return null;
+
+  const handleNavigateGoogleMaps = () => {
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${MASTERPLAN_CENTER[0]},${MASTERPLAN_CENTER[1]}`, '_blank');
+  };
 
   return (
     <AnimatePresence>
@@ -42,12 +42,16 @@ export default function ProjectInfoModal({ isOpen, onClose }: ProjectInfoModalPr
           <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
             <div>
               <div className="flex items-center space-x-2">
-                <h2 className="text-lg font-bold text-white">{PROJECT_DATA.name}</h2>
+                <h2 className="text-lg font-bold text-white">
+                  {language === 'mr' ? 'नक्षत्र लक्झरी एन्क्लेव्ह' : PROJECT_DATA.name}
+                </h2>
                 <span className="px-2 py-0.5 text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-md">
-                  RERA APPROVED
+                  {language === 'mr' ? 'रेरा मान्यताप्राप्त' : 'RERA APPROVED'}
                 </span>
               </div>
-              <p className="text-xs text-slate-400">{PROJECT_DATA.tagline}</p>
+              <p className="text-xs text-slate-400">
+                {language === 'mr' ? 'शांत व निसर्गरम्य वातावरणातील अत्याधुनिक प्लॉटिंग प्रकल्प' : PROJECT_DATA.tagline}
+              </p>
             </div>
             <button
               onClick={onClose}
@@ -67,7 +71,7 @@ export default function ProjectInfoModal({ isOpen, onClose }: ProjectInfoModalPr
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Overview
+              {language === 'mr' ? 'आढावा' : 'Overview'}
             </button>
             <button
               onClick={() => setActiveTab('amenities')}
@@ -77,7 +81,7 @@ export default function ProjectInfoModal({ isOpen, onClose }: ProjectInfoModalPr
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Amenities
+              {language === 'mr' ? 'सुविधा' : 'Amenities'}
             </button>
             <button
               onClick={() => setActiveTab('gallery')}
@@ -87,7 +91,7 @@ export default function ProjectInfoModal({ isOpen, onClose }: ProjectInfoModalPr
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Gallery
+              {language === 'mr' ? 'गॅलरी' : 'Gallery'}
             </button>
             <button
               onClick={() => setActiveTab('location')}
@@ -97,7 +101,7 @@ export default function ProjectInfoModal({ isOpen, onClose }: ProjectInfoModalPr
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Location
+              {language === 'mr' ? 'स्थान व रस्ते' : 'Location'}
             </button>
           </div>
 
@@ -109,19 +113,31 @@ export default function ProjectInfoModal({ isOpen, onClose }: ProjectInfoModalPr
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="p-3.5 rounded-2xl glass-card text-center">
-                    <span className="text-slate-400 text-[10px] uppercase font-bold">Total Plots</span>
+                    <span className="text-slate-400 text-[10px] uppercase font-bold">
+                      {language === 'mr' ? 'एकूण प्लॉट्स' : 'Total Plots'}
+                    </span>
                     <div className="text-xl font-black text-sky-400 mt-0.5">{PROJECT_DATA.totalPlots}</div>
                   </div>
                   <div className="p-3.5 rounded-2xl glass-card text-center">
-                    <span className="text-slate-400 text-[10px] uppercase font-bold">Total Area</span>
-                    <div className="text-xl font-black text-emerald-400 mt-0.5">{PROJECT_DATA.totalAcres} Acres</div>
+                    <span className="text-slate-400 text-[10px] uppercase font-bold">
+                      {language === 'mr' ? 'एकूण क्षेत्र' : 'Total Area'}
+                    </span>
+                    <div className="text-xl font-black text-emerald-400 mt-0.5">
+                      {PROJECT_DATA.totalAcres} {language === 'mr' ? 'एकर' : 'Acres'}
+                    </div>
                   </div>
                   <div className="p-3.5 rounded-2xl glass-card text-center">
-                    <span className="text-slate-400 text-[10px] uppercase font-bold">Possession</span>
-                    <div className="text-sm font-bold text-amber-300 mt-1">{PROJECT_DATA.possessionDate}</div>
+                    <span className="text-slate-400 text-[10px] uppercase font-bold">
+                      {language === 'mr' ? 'ताबा' : 'Possession'}
+                    </span>
+                    <div className="text-sm font-bold text-amber-300 mt-1">
+                      {language === 'mr' ? 'डिसेंबर २०२६' : PROJECT_DATA.possessionDate}
+                    </div>
                   </div>
                   <div className="p-3.5 rounded-2xl glass-card text-center">
-                    <span className="text-slate-400 text-[10px] uppercase font-bold">RERA Number</span>
+                    <span className="text-slate-400 text-[10px] uppercase font-bold">
+                      {language === 'mr' ? 'रेरा क्रमांक' : 'RERA Number'}
+                    </span>
                     <div className="text-[11px] font-bold text-purple-300 mt-1">{PROJECT_DATA.reraId}</div>
                   </div>
                 </div>
@@ -130,10 +146,12 @@ export default function ProjectInfoModal({ isOpen, onClose }: ProjectInfoModalPr
                 <div className="p-4 rounded-2xl glass-card space-y-2 border border-slate-700/60">
                   <div className="flex items-center space-x-2 text-slate-200 font-bold">
                     <Award className="w-4 h-4 text-amber-400" />
-                    <span>Developer & Architectural Team</span>
+                    <span>{language === 'mr' ? 'विकासक व आर्किटेक्चरल संघ' : 'Developer & Architectural Team'}</span>
                   </div>
                   <p className="text-slate-300 leading-relaxed">
-                    Developed by <strong>{PROJECT_DATA.developer}</strong>. Featuring modern layout masterplanning, underground utilities, and 100% Vastu-aligned residential plotting.
+                    {language === 'mr'
+                      ? 'नक्षत्र अर्बन डेव्हलपर्स आणि स्पेसॉर टेक द्वारे विकसित. आधुनिक टाउनशिप मास्टरप्लॅनिंग, भूमिगत वीज व पाणी सुविधा आणि १००% वास्तू सुसंगत निवासी प्लॉट्स.'
+                      : `Developed by ${PROJECT_DATA.developer}. Featuring modern layout masterplanning, underground utilities, and 100% Vastu-aligned residential plotting.`}
                   </p>
                 </div>
               </div>
@@ -171,11 +189,24 @@ export default function ProjectInfoModal({ isOpen, onClose }: ProjectInfoModalPr
             )}
 
             {activeTab === 'location' && (
-              <div className="space-y-3">
-                <div className="p-3.5 rounded-2xl glass-card border border-slate-700/60 flex items-center space-x-2 text-slate-200 font-bold">
-                  <MapPin className="w-4 h-4 text-rose-400" />
-                  <span>Strategic Outer Ring Road Connectivity</span>
+              <div className="space-y-4">
+                <div className="p-3.5 rounded-2xl glass-card border border-slate-700/60 flex items-center justify-between">
+                  <div className="flex items-center space-x-2 text-slate-200 font-bold">
+                    <MapPin className="w-4 h-4 text-rose-400" />
+                    <span>{language === 'mr' ? 'ओआरआर जंक्शन व प्रमुख संपर्क' : 'Strategic Outer Ring Road Connectivity'}</span>
+                  </div>
+                  
+                  {/* Direct Google Maps button */}
+                  <button
+                    onClick={handleNavigateGoogleMaps}
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-sky-500/20 text-sky-400 border border-sky-500/40 hover:bg-sky-500/30 text-xs font-bold transition-all"
+                  >
+                    <Navigation className="w-3.5 h-3.5" />
+                    <span>{t('navigateSite')}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
                 </div>
+
                 <div className="divide-y divide-slate-800/80 glass-card rounded-2xl overflow-hidden border border-slate-700/60">
                   {PROJECT_DATA.locationHighlights.map((loc, idx) => (
                     <div key={idx} className="p-3 flex items-center justify-between hover:bg-slate-800/50 transition-colors">
@@ -185,7 +216,7 @@ export default function ProjectInfoModal({ isOpen, onClose }: ProjectInfoModalPr
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-sky-400">{loc.distance}</div>
-                        <div className="text-[10px] text-slate-400">{loc.travelTime} drive</div>
+                        <div className="text-[10px] text-slate-400">{loc.travelTime} {language === 'mr' ? 'अंतर' : 'drive'}</div>
                       </div>
                     </div>
                   ))}
@@ -201,7 +232,7 @@ export default function ProjectInfoModal({ isOpen, onClose }: ProjectInfoModalPr
               onClick={onClose}
               className="py-2.5 px-6 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition-all"
             >
-              Close Overview
+              {t('close')}
             </button>
           </div>
 
@@ -210,3 +241,4 @@ export default function ProjectInfoModal({ isOpen, onClose }: ProjectInfoModalPr
     </AnimatePresence>
   );
 }
+

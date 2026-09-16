@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle2, ShieldCheck, Zap, Calendar, User, Phone, Mail, FileText, ArrowRight } from 'lucide-react';
-import { Plot, BookingRequest } from '@/types/plot';
+import { X, CheckCircle2, Zap, Calendar, User, Phone, Mail, ArrowRight } from 'lucide-react';
+import { Plot } from '@/types/plot';
 import { formatCurrency } from '@/utils/formatters';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface BookingModalProps {
   plot: Plot | null;
@@ -19,6 +20,7 @@ export default function BookingModal({
   onClose,
   onConfirmBooking,
 }: BookingModalProps) {
+  const { language, t } = useLanguage();
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -53,8 +55,6 @@ export default function BookingModal({
     onClose();
   };
 
-  const tokenAmount = 100000; // ₹1,00,000 Token Deposit
-
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md pointer-events-auto">
@@ -71,8 +71,8 @@ export default function BookingModal({
                 <Zap className="w-5 h-5 fill-slate-950" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-white">Reserve Plot #{plot.plotNumber}</h2>
-                <p className="text-xs text-slate-400">{plot.zone} • {formatCurrency(plot.totalPrice)}</p>
+                <h2 className="text-base font-bold text-white">{t('bookTitle')} {plot.plotNumber}</h2>
+                <p className="text-xs text-slate-400">{plot.zone} • {formatCurrency(plot.totalPrice, language)}</p>
               </div>
             </div>
             <button
@@ -89,15 +89,15 @@ export default function BookingModal({
               {/* Summary Card */}
               <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1.5">
                 <div className="flex justify-between text-slate-300">
-                  <span>Selected Plot:</span>
-                  <strong className="text-white">Plot #{plot.plotNumber} ({plot.areaSqFt} sq.ft)</strong>
+                  <span>{language === 'mr' ? 'निवडलेला प्लॉट:' : 'Selected Plot:'}</span>
+                  <strong className="text-white">{t('plotNumber')} {plot.plotNumber} ({plot.areaSqFt} sq.ft)</strong>
                 </div>
                 <div className="flex justify-between text-slate-300">
-                  <span>Total Plot Value:</span>
-                  <strong className="text-emerald-400">{formatCurrency(plot.totalPrice)}</strong>
+                  <span>{language === 'mr' ? 'एकूण किंमत:' : 'Total Plot Value:'}</span>
+                  <strong className="text-emerald-400">{formatCurrency(plot.totalPrice, language)}</strong>
                 </div>
                 <div className="flex justify-between text-slate-300 pt-1 border-t border-slate-800">
-                  <span>Refundable Reservation Token:</span>
+                  <span>{language === 'mr' ? 'परतावायोग्य आरक्षण टोकन:' : 'Refundable Reservation Token:'}</span>
                   <strong className="text-amber-300">₹1,00,000</strong>
                 </div>
               </div>
@@ -105,7 +105,7 @@ export default function BookingModal({
               {/* Form Inputs */}
               <div className="space-y-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Full Name *</label>
+                  <label className="block text-slate-300 font-semibold mb-1">{t('fullName')} *</label>
                   <div className="relative flex items-center">
                     <User className="absolute left-3 w-4 h-4 text-slate-400" />
                     <input
@@ -113,7 +113,7 @@ export default function BookingModal({
                       required
                       value={formData.fullName}
                       onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      placeholder="Enter your full name"
+                      placeholder={language === 'mr' ? 'तुमचे संपूर्ण नाव टाका' : 'Enter your full name'}
                       className="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-xs"
                     />
                   </div>
@@ -121,7 +121,7 @@ export default function BookingModal({
 
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Phone Number *</label>
+                    <label className="block text-slate-300 font-semibold mb-1">{t('phoneNumber')} *</label>
                     <div className="relative flex items-center">
                       <Phone className="absolute left-3 w-4 h-4 text-slate-400" />
                       <input
@@ -136,7 +136,7 @@ export default function BookingModal({
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Email Address *</label>
+                    <label className="block text-slate-300 font-semibold mb-1">{t('emailAddress')} *</label>
                     <div className="relative flex items-center">
                       <Mail className="absolute left-3 w-4 h-4 text-slate-400" />
                       <input
@@ -152,7 +152,7 @@ export default function BookingModal({
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Preferred Site Visit Date</label>
+                  <label className="block text-slate-300 font-semibold mb-1">{t('preferredVisitDate')}</label>
                   <div className="relative flex items-center">
                     <Calendar className="absolute left-3 w-4 h-4 text-slate-400" />
                     <input
@@ -165,12 +165,12 @@ export default function BookingModal({
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Additional Notes (Optional)</label>
+                  <label className="block text-slate-300 font-semibold mb-1">{t('specialRequests')}</label>
                   <textarea
                     rows={2}
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Specify bank loan assistance, customization requests..."
+                    placeholder={language === 'mr' ? 'गृहकर्ज मार्गदर्शन, सानुकूल आवश्यकता...' : 'Specify bank loan assistance, customization requests...'}
                     className="w-full p-3 rounded-xl glass-input text-xs"
                   />
                 </div>
@@ -186,11 +186,11 @@ export default function BookingModal({
                   {isSubmitting ? (
                     <div className="flex items-center space-x-2">
                       <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
-                      <span>PROCESSING RESERVATION...</span>
+                      <span>{language === 'mr' ? 'नोंदणी प्रक्रिया सुरू आहे...' : 'PROCESSING RESERVATION...'}</span>
                     </div>
                   ) : (
                     <>
-                      <span>Submit Plot Reservation Request</span>
+                      <span>{t('confirmBooking')}</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
@@ -206,28 +206,30 @@ export default function BookingModal({
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-white">Plot Reservation Confirmed!</h3>
+                <h3 className="text-lg font-bold text-white">{t('bookingSuccess')}</h3>
                 <p className="text-xs text-slate-400 mt-1">
-                  Plot #{plot.plotNumber} has been temporarily blocked for 48 hours under your reservation request.
+                  {language === 'mr'
+                    ? `प्लॉट क्र. ${plot.plotNumber} पुढील ४८ तासांसाठी तुमच्या नावे तात्पुरता आरक्षित करण्यात आला आहे.`
+                    : `Plot #${plot.plotNumber} has been temporarily blocked for 48 hours under your reservation request.`}
                 </p>
               </div>
 
               <div className="p-4 rounded-2xl glass-card border border-slate-700/80 text-xs space-y-2 text-left">
                 <div className="flex justify-between border-b border-slate-800 pb-2">
-                  <span className="text-slate-400">Booking Reference:</span>
+                  <span className="text-slate-400">{language === 'mr' ? 'संदर्भ क्रमांक:' : 'Booking Reference:'}</span>
                   <span className="font-extrabold text-sky-400">{bookingRef}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Applicant:</span>
+                  <span className="text-slate-400">{language === 'mr' ? 'अर्जदाराचे नाव:' : 'Applicant:'}</span>
                   <span className="font-semibold text-white">{formData.fullName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Phone:</span>
+                  <span className="text-slate-400">{language === 'mr' ? 'मोबाईल नंबर:' : 'Phone:'}</span>
                   <span className="font-semibold text-white">{formData.phone}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Plot Status Updated:</span>
-                  <span className="font-bold text-amber-400 uppercase">Booked (Blocked)</span>
+                  <span className="text-slate-400">{language === 'mr' ? 'प्लॉट स्थिती:' : 'Plot Status Updated:'}</span>
+                  <span className="font-bold text-amber-400 uppercase">{language === 'mr' ? 'आरक्षित (Booked)' : 'Booked (Blocked)'}</span>
                 </div>
               </div>
 
@@ -235,7 +237,7 @@ export default function BookingModal({
                 onClick={handleResetAndClose}
                 className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition-all"
               >
-                Back to Masterplan Map
+                {t('close')}
               </button>
             </div>
           )}
@@ -245,3 +247,4 @@ export default function BookingModal({
     </AnimatePresence>
   );
 }
+

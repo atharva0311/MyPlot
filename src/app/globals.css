@@ -101,20 +101,20 @@
   color: #38bdf8 !important;
 }
 
-/* Edge Dimension Label Badges */
+/* Edge Dimension Label Badges - Optimized for 60fps GPU rendering */
 .edge-dimension-badge {
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(15, 23, 42, 0.94);
   color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.4);
+  border: 1px solid rgba(56, 189, 248, 0.5);
   font-size: 9px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-weight: 700;
   padding: 1px 4px;
   border-radius: 4px;
   white-space: nowrap;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.7);
   pointer-events: none;
-  backdrop-filter: blur(4px);
+  transform: translateZ(0); /* Hardware accelerated */
 }
 
 .selected-edge-dimension-badge {

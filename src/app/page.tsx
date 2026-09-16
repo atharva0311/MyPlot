@@ -9,10 +9,13 @@ import ProjectInfoModal from '@/components/ProjectInfoModal';
 import BookingModal from '@/components/BookingModal';
 import { NAKSHATRA_PLOTS } from '@/data/nakshatraPlots';
 import { Plot, PlotStatus, FilterState } from '@/types/plot';
+import { LinearUnit } from '@/utils/formatters';
+import { LanguageProvider } from '@/context/LanguageContext';
 
-export default function Home() {
+function MasterplanViewer() {
   const [plots, setPlots] = useState<Plot[]>(NAKSHATRA_PLOTS);
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
+  const [linearUnit, setLinearUnit] = useState<LinearUnit>('ft');
 
   // Modals state
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -167,6 +170,7 @@ export default function Home() {
         availableCount={availableCount}
         bookedCount={bookedCount}
         soldCount={soldCount}
+        linearUnit={linearUnit}
       />
 
       {/* Plot Detail Sidebar Drawer */}
@@ -202,3 +206,12 @@ export default function Home() {
     </main>
   );
 }
+
+export default function Home() {
+  return (
+    <LanguageProvider>
+      <MasterplanViewer />
+    </LanguageProvider>
+  );
+}
+

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { PlotStatus } from '@/types/plot';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface StatusLegendProps {
   activeStatusFilter: PlotStatus[];
@@ -18,6 +19,7 @@ export default function StatusLegend({
   bookedCount,
   soldCount,
 }: StatusLegendProps) {
+  const { t } = useLanguage();
   const isSelected = (status: PlotStatus) =>
     activeStatusFilter.length === 0 || activeStatusFilter.includes(status);
 
@@ -36,7 +38,7 @@ export default function StatusLegend({
           title="Click to filter Available plots"
         >
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span className="font-medium">Available ({availableCount})</span>
+          <span className="font-medium">{t('available')} ({availableCount})</span>
         </button>
 
         {/* Booked Pill */}
@@ -50,7 +52,7 @@ export default function StatusLegend({
           title="Click to filter Booked plots"
         >
           <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-          <span className="font-medium">Booked ({bookedCount})</span>
+          <span className="font-medium">{t('booked')} ({bookedCount})</span>
         </button>
 
         {/* Sold Pill */}
@@ -64,10 +66,11 @@ export default function StatusLegend({
           title="Click to filter Sold plots"
         >
           <span className="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
-          <span className="font-medium">Sold ({soldCount})</span>
+          <span className="font-medium">{t('sold')} ({soldCount})</span>
         </button>
 
       </div>
     </div>
   );
 }
+

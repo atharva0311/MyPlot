@@ -2,18 +2,20 @@
 
 import React, { useState } from 'react';
 import { 
-  Building2, 
   SlidersHorizontal, 
   Info, 
   Download, 
   Share2, 
   Check, 
-  Sparkles,
   MapPin,
-  Layers
+  Layers,
+  Globe2,
+  Navigation
 } from 'lucide-react';
 import { Plot } from '@/types/plot';
 import SearchAutocomplete from './SearchAutocomplete';
+import { useLanguage } from '@/context/LanguageContext';
+import { MASTERPLAN_CENTER } from '@/data/nakshatraPlots';
 
 interface HeaderProps {
   plots: Plot[];
@@ -32,6 +34,7 @@ export default function Header({
   onOpenProjectInfo,
   activeFilterCount,
 }: HeaderProps) {
+  const { language, setLanguage, t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
   // Status counts
@@ -49,7 +52,6 @@ export default function Header({
   };
 
   const handleDownloadBrochure = () => {
-    // Generate brochure download simulation
     const content = `NAKSHATRA LUXURY ENCLAVE - MASTERPLAN BROCHURE\nRERA ID: P02400007891\nTotal Plots: 109 | Location: Gachibowli ORR, Hyderabad\nDeveloper: Nakshatra Urban Developers & SPACER Tech\n\nContact Sales Office for bookings.`;
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -58,6 +60,10 @@ export default function Header({
     a.download = 'Nakshatra_Masterplan_Brochure.txt';
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleNavigateGoogleMaps = () => {
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${MASTERPLAN_CENTER[0]},${MASTERPLAN_CENTER[1]}`, '_blank');
   };
 
   return (
@@ -77,15 +83,20 @@ export default function Header({
             <div>
               <div className="flex items-center space-x-2">
                 <h1 className="font-bold text-sm md:text-base text-white tracking-wide">
-                  NAKSHATRA
+                  {t('projectName')}
                 </h1>
                 <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-sky-500/20 text-sky-400 border border-sky-500/30 rounded-md">
-                  SPACER 3D
+                  {t('projectBadge')}
                 </span>
               </div>
-              <div className="flex items-center space-x-1 text-xs text-slate-400">
-                <MapPin className="w-3 h-3 text-emerald-400" />
-                <span className="truncate max-w-[170px] md:max-w-xs">Gachibowli ORR • 109 Residential Plots</span>
+              <div 
+                onClick={handleNavigateGoogleMaps}
+                className="flex items-center space-x-1 text-xs text-slate-400 hover:text-sky-300 cursor-pointer transition-colors group"
+                title={t('navigateSite')}
+              >
+                <MapPin className="w-3 h-3 text-emerald-400 group-hover:scale-110 transition-transform" />
+                <span className="truncate max-w-[170px] md:max-w-xs">{t('projectSubtitle')}</span>
+                <Navigation className="w-2.5 h-2.5 text-sky-400 opacity-80" />
               </div>
             </div>
           </div>
@@ -94,7 +105,7 @@ export default function Header({
           <button
             onClick={onOpenProjectInfo}
             className="md:hidden p-2 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white"
-            title="Project Details"
+            title={t('overview')}
           >
             <Info className="w-5 h-5" />
           </button>
@@ -108,36 +119,62 @@ export default function Header({
           {/* Status Pills */}
           <div className="hidden lg:flex items-center space-x-1.5 glass-panel px-3 py-1.5 rounded-xl text-xs font-medium">
             <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-800/60 border border-slate-700/50">
-              <span className="text-slate-400">Total:</span>
+              <span className="text-slate-400">{t('total')}:</span>
               <span className="font-bold text-white">{total}</span>
             </div>
             <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>Available:</span>
+              <span>{t('available')}:</span>
               <span className="font-bold">{available}</span>
             </div>
             <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400">
               <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-              <span>Booked:</span>
+              <span>{t('booked')}:</span>
               <span className="font-bold">{booked}</span>
             </div>
             <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-400">
               <span className="w-2 h-2 rounded-full bg-rose-400"></span>
-              <span>Sold:</span>
+              <span>{t('sold')}:</span>
               <span className="font-bold">{sold}</span>
             </div>
           </div>
         </div>
 
-        {/* Right: Controls & Actions */}
+        {/* Right: Language Switcher, Filters, Overview & Actions */}
         <div className="pointer-events-auto flex items-center space-x-2">
+          
+          {/* Language Switcher Button (English / Marathi) */}
+          <div className="flex items-center bg-slate-900/90 p-1 rounded-xl glass-panel border border-slate-700/80 shadow-lg">
+            <Globe2 className="w-3.5 h-3.5 text-sky-400 ml-1.5 mr-1" />
+            <button
+              onClick={() => setLanguage('en')}
+              className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+                language === 'en'
+                  ? 'bg-sky-500 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              EN
+            </button>
+            <button
+              onClick={() => setLanguage('mr')}
+              className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+                language === 'mr'
+                  ? 'bg-sky-500 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              मराठी
+            </button>
+          </div>
+
           {/* Filter Button */}
           <button
             onClick={onOpenFilters}
             className="relative flex items-center space-x-2 glass-panel px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800/80 transition-all border border-slate-700/60 shadow-lg"
           >
             <SlidersHorizontal className="w-4 h-4 text-sky-400" />
-            <span className="hidden sm:inline">Filters</span>
+            <span className="hidden sm:inline">{t('filters')}</span>
             {activeFilterCount > 0 && (
               <span className="flex items-center justify-center w-5 h-5 rounded-full bg-sky-500 text-white text-[10px] font-bold">
                 {activeFilterCount}
@@ -151,34 +188,34 @@ export default function Header({
             className="hidden md:flex items-center space-x-1.5 glass-panel px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800/80 transition-all border border-slate-700/60"
           >
             <Info className="w-4 h-4 text-emerald-400" />
-            <span>Overview</span>
+            <span>{t('overview')}</span>
           </button>
 
           {/* Download Brochure Button */}
           <button
             onClick={handleDownloadBrochure}
             className="hidden sm:flex items-center space-x-1.5 glass-panel px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all border border-slate-700/60"
-            title="Download Brochure"
+            title={t('brochure')}
           >
             <Download className="w-4 h-4 text-amber-400" />
-            <span className="hidden md:inline">Brochure</span>
+            <span className="hidden md:inline">{t('brochure')}</span>
           </button>
 
           {/* Share Button */}
           <button
             onClick={handleShare}
             className="flex items-center space-x-1.5 glass-panel px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all border border-slate-700/60"
-            title="Share Link"
+            title={t('share')}
           >
             {copied ? (
               <>
                 <Check className="w-4 h-4 text-emerald-400" />
-                <span className="text-emerald-400">Copied!</span>
+                <span className="text-emerald-400">{t('copied')}</span>
               </>
             ) : (
               <>
                 <Share2 className="w-4 h-4 text-purple-400" />
-                <span className="hidden sm:inline">Share</span>
+                <span className="hidden sm:inline">{t('share')}</span>
               </>
             )}
           </button>
@@ -188,3 +225,4 @@ export default function Header({
     </header>
   );
 }
+
